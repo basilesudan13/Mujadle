@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mujadle — Anime Opening & Ending Wordle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #0d0d1a;
+    color: #f0eaff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .scene-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(160deg, #0d0d1a 0%, #1a0e2e 40%, #0e1a2e 100%);
+  }
+  .scene-bg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 30%, rgba(120,60,200,0.18), transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 70%, rgba(30,100,200,0.15), transparent 70%),
+      radial-gradient(ellipse 30% 30% at 60% 10%, rgba(255,100,150,0.07), transparent 70%);
+  }
+  .stars {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.55), transparent),
+      radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 45% 8%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 70% 25%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 85% 60%, rgba(255,255,255,0.45), transparent),
+      radial-gradient(1px 1px at 55% 80%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 90% 90%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1px 1px at 5% 70%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 35% 55%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 75% 5%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 60% 45%, rgba(255,255,255,0.25), transparent),
+      radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1.5px 1.5px at 92% 30%, rgba(255,255,255,0.45), transparent);
+  }
+
+  #app {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(13,13,26,0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    flex-wrap: wrap;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #c084fc, #818cf8, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 3px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .header-mid { text-align: center; flex: 1; }
+  .header-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .mode-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-top: 3px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .mode-badge.daily    { background: rgba(167,139,250,0.15); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.25); }
+  .mode-badge.infinite { background: rgba(56,189,248,0.15);  color: #7dd3fc; border: 1px solid rgba(56,189,248,0.25); }
+  .mode-badge.hard     { background: rgba(251,146,60,0.15);  color: #fdba74; border: 1px solid rgba(251,146,60,0.3); }
+  .mode-badge.hardcore { background: rgba(239,68,68,0.15);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .mode-badge.era      { background: rgba(251,191,36,0.15);  color: #fcd34d; border: 1px solid rgba(251,191,36,0.3); }
+
+  .header-right { text-align: right; }
+  .countdown {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: #a78bfa;
+    letter-spacing: 1px;
+  }
+  .streak-badge { font-size: 12px; color: #fbbf24; font-weight: 700; }
+
+  /* ── Mode / Type switchers ── */
+  .mode-switcher {
+    display: flex; gap: 8px; padding: 14px 20px 0; justify-content: center;
+  }
+  .mode-btn {
+    padding: 7px 22px;
+    border-radius: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.45);
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .mode-btn.active {
+    background: rgba(124,58,237,0.25);
+    border-color: rgba(167,139,250,0.5);
+    color: #c4b5fd;
+  }
+  .mode-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.09);
+    color: rgba(255,255,255,0.75);
+  }
+
+  .type-switcher {
+    display: flex; gap: 6px; padding: 10px 20px 0; justify-content: center;
+  }
+  .type-btn {
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: rgba(255,255,255,0.38);
+    transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .type-btn.active.op   { background: rgba(167,139,250,0.2); border-color: rgba(167,139,250,0.4); color: #c4b5fd; }
+  .type-btn.active.ed   { background: rgba(56,189,248,0.15);  border-color: rgba(56,189,248,0.35);  color: #7dd3fc; }
+  .type-btn.active.both { background: rgba(251,191,36,0.15);  border-color: rgba(251,191,36,0.35);  color: #fcd34d; }
+  .type-btn:hover:not(.active) { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); }
+
+  /* ── Main ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 16px 50px;
+    gap: 14px;
+  }
+
+  /* ── Video ── */
+  .video-wrap {
+    width: 100%; max-width: 640px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #000;
+    box-shadow: 0 0 50px rgba(120,60,200,0.22);
+  }
+  .video-wrap video {
+    width: 100%; display: block;
+    max-height: 360px;
+    background: #000;
+    filter: blur(var(--blur, 22px));
+    transition: filter 0.9s ease;
+    transform: scale(1.06); /* prevent white fringe at blur edges */
+  }
+  .blur-overlay {
+    /* kept in DOM for JS references but no longer does the blur */
+    display: none;
+  }
+  .clip-label {
+    position: absolute; bottom: 8px; right: 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(255,255,255,0.55);
+    background: rgba(0,0,0,0.55);
+    padding: 3px 9px; border-radius: 6px;
+  }
+  .no-video-msg {
+    display: none;
+    color: rgba(255,255,255,0.4);
+    font-size: 13px;
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(255,255,255,0.03);
+  }
+  .video-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.6);
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+  }
+  .play-pause-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(167,139,250,0.2);
+    border: 1px solid rgba(167,139,250,0.4);
+    color: #c4b5fd;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    transition: background 0.15s, transform 0.12s;
+    flex-shrink: 0;
+  }
+  .play-pause-btn:hover { background: rgba(167,139,250,0.35); }
+  .play-pause-btn:active { transform: scale(0.92); }
+  .vid-time {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(255,255,255,0.5);
+    min-width: 60px;
+  }
+  .vid-scrub {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: default;
+  }
+  .vid-scrub-fill {
+    height: 100%;
+    background: #a78bfa;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+    width: 0%;
+  }
+
+  /* ── Volume ── */
+  .vol-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  .vol-icon { font-size: 14px; cursor: pointer; line-height: 1; color: rgba(255,255,255,0.55); user-select: none; transition: color 0.15s; }
+  .vol-icon:hover { color: #fff; }
+  .vol-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 60px; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.18); outline: none; cursor: pointer;
+  }
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%;
+    background: #a78bfa; cursor: pointer; box-shadow: 0 0 4px rgba(167,139,250,0.7); transition: transform 0.12s;
+  }
+  .vol-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+  .vol-slider::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: #a78bfa; border: none; cursor: pointer; }
+
+  /* ── Fullscreen ── */
+  .fullscreen-btn {
+    width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.55); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; font-size: 13px;
+    transition: background 0.15s, color 0.15s; padding: 0;
+  }
+  .fullscreen-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .video-wrap:fullscreen, .video-wrap:-webkit-full-screen { width: 100%; height: 100%; background: #000; }
+  .video-wrap:fullscreen video, .video-wrap:-webkit-full-screen video { max-height: 100vh; height: 100%; object-fit: contain; }
+
+  /* ── Result cover image ── */
+  .res-top { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; text-align: left; }
+  .res-info { flex: 1; }
+  .res-cover {
+    width: 110px; height: 155px; object-fit: cover; border-radius: 8px;
+    border: 2px solid rgba(167,139,250,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    flex-shrink: 0; display: block;
+  }
+  .res-cover-placeholder {
+    width: 110px; height: 155px; border-radius: 8px; flex-shrink: 0;
+    background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center; font-size: 30px;
+  }
+
+  /* ── Progress bar ── */
+  .progress-track {
+    width: 100%; max-width: 640px;
+    height: 4px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #38bdf8);
+    transition: width 0.8s ease;
+    border-radius: 2px;
+  }
+
+  /* ── Lives ── */
+  .lives-row { display: flex; gap: 8px; align-items: center; justify-content: center; }
+  .heart {
+    font-size: 28px;
+    transition: transform 0.3s, opacity 0.3s;
+    filter: drop-shadow(0 0 5px rgba(255,100,130,0.5));
+  }
+  .heart.lost { filter: grayscale(1); opacity: 0.22; transform: scale(0.82); }
+
+  /* ── Guess area ── */
+  .guess-area { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 8px; }
+  .input-row { display: flex; gap: 8px; position: relative; }
+  .search-wrapper { flex: 1; position: relative; }
+
+  #search-input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    color: #f0eaff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  #search-input::placeholder { color: rgba(255,255,255,0.3); }
+  #search-input:focus { border-color: rgba(167,139,250,0.55); background: rgba(255,255,255,0.1); }
+  #search-input:disabled { opacity: 0.38; cursor: not-allowed; }
+
+  .s-icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px; color: rgba(255,255,255,0.3);
+    pointer-events: none;
+  }
+
+  #autocomplete {
+    position: absolute;
+    top: calc(100% + 4px); left: 0; right: 0;
+    background: #160d2c;
+    border: 1px solid rgba(167,139,250,0.28);
+    border-radius: 10px;
+    z-index: 200;
+    max-height: 210px; overflow-y: auto;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  #autocomplete.open { display: block; }
+  .ac-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: rgba(255,255,255,0.82);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.12s;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.sel { background: rgba(167,139,250,0.15); }
+
+  .btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none;
+    letter-spacing: 0.5px;
+    transition: transform 0.14s, opacity 0.14s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn-guess {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(124,58,237,0.38);
+  }
+  .btn-guess:disabled { opacity: 0.32; cursor: not-allowed; transform: none; }
+  .btn-skip {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-skip:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+  .btn-skip:disabled { opacity: 0.28; cursor: not-allowed; }
+
+  /* ── Guesses log ── */
+  .guesses-log { display: flex; flex-direction: column; gap: 5px; width: 100%; max-width: 640px; }
+  .g-entry {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+  }
+  .g-entry.wrong  { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.18);  color: #fca5a5; }
+  .g-entry.skipped { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.33); font-style: italic; }
+
+  /* ── Era Mode ── */
+  .era-panel {
+    display: none;
+    width: 100%; max-width: 640px;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .era-panel.show { display: flex; }
+
+  .era-score-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: 'Cinzel', serif;
+  }
+  .era-round-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.38);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .era-score {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fcd34d;
+  }
+  .era-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .era-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .era-dot.correct { background: #86efac; border-color: #86efac; box-shadow: 0 0 6px rgba(134,239,172,0.6); }
+  .era-dot.wrong   { background: #fca5a5; border-color: #fca5a5; }
+  .era-dot.current { border-color: #fcd34d; box-shadow: 0 0 6px rgba(252,211,77,0.5); }
+
+  .era-prompt {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .era-btns-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+  .era-btn {
+    padding: 18px 10px;
+    border-radius: 12px;
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.8);
+    transition: all 0.15s;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .era-btn:hover:not(:disabled) {
+    background: rgba(252,211,77,0.12);
+    border-color: rgba(252,211,77,0.45);
+    color: #fcd34d;
+    transform: translateY(-2px);
+  }
+  .era-btn:disabled { cursor: not-allowed; }
+  .era-btn.correct {
+    background: rgba(134,239,172,0.18);
+    border-color: #86efac;
+    color: #86efac;
+  }
+  .era-btn.wrong {
+    background: rgba(252,165,165,0.12);
+    border-color: #fca5a5;
+    color: #fca5a5;
+  }
+  .era-btn.reveal {
+    background: rgba(134,239,172,0.1);
+    border-color: rgba(134,239,172,0.4);
+    color: #86efac;
+    animation: eraPulse 0.5s ease;
+  }
+  @keyframes eraPulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+
+  .era-feedback {
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 22px;
+    transition: opacity 0.3s;
+  }
+  .era-feedback.correct { color: #86efac; }
+  .era-feedback.wrong   { color: #fca5a5; }
+
+  .era-reveal-info {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+  .era-reveal-info.show { display: flex; }
+  .era-reveal-anime { font-size: 15px; font-weight: 700; color: #c4b5fd; }
+  .era-reveal-year  { font-size: 13px; color: rgba(255,255,255,0.45); }
+
+  .era-next-btn {
+    margin-top: 4px;
+    padding: 11px 32px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b45309, #d97706);
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; border: none;
+    box-shadow: 0 2px 14px rgba(180,83,9,0.45);
+    transition: transform 0.14s, opacity 0.14s;
+    display: none;
+  }
+  .era-next-btn.show { display: block; }
+  .era-next-btn:active { transform: scale(0.96); }
+
+  /* Final score screen for Era mode */
+  .era-final {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 28px 22px;
+    width: 100%; max-width: 640px;
+    background: rgba(16,8,34,0.97);
+    border: 1px solid rgba(252,211,77,0.25);
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(180,120,0,0.2);
+  }
+  .era-final.show { display: flex; }
+  .era-final-title {
+    font-family: 'Cinzel', serif;
+    font-size: 26px; font-weight: 900;
+    color: #fcd34d;
+  }
+  .era-final-score {
+    font-family: 'Cinzel', serif;
+    font-size: 52px; font-weight: 900;
+    color: #f0eaff;
+    line-height: 1;
+  }
+  .era-final-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.38);
+    letter-spacing: 1px;
+  }
+
+  /* ── Result panel ── */
+  .result-panel {
+    display: none;
+    width: 100%; max-width: 640px;
+    background: rgba(16,8,34,0.97);
+    border: 1px solid rgba(167,139,250,0.22);
+    border-radius: 16px;
+    padding: 26px 22px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(120,60,200,0.28);
+  }
+  .result-panel.show { display: block; }
+  .res-title { font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; margin-bottom: 14px; }
+  .res-title.win  { color: #86efac; }
+  .res-title.lose { color: #fca5a5; }
+  .res-anime { font-size: 17px; font-weight: 700; color: #c4b5fd; margin-bottom: 3px; }
+  .res-theme { font-size: 12px; color: rgba(255,255,255,0.33); margin-bottom: 14px; }
+  .res-stats { display: flex; justify-content: flex-start; gap: 22px; margin-bottom: 0; }
+  .stat-n { font-family: 'Cinzel', serif; font-size: 28px; font-weight: 700; color: #a78bfa; }
+  .stat-l { font-size: 11px; color: rgba(255,255,255,0.33); text-transform: uppercase; letter-spacing: 1px; }
+  .res-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #fff;
+    padding: 12px 26px;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; border: none;
+    box-shadow: 0 2px 12px rgba(124,58,237,0.38);
+    transition: transform 0.14s;
+  }
+  .btn-primary:active { transform: scale(0.96); }
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.6);
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+  /* ── History ── */
+  .history-panel { width: 100%; max-width: 640px; display: none; }
+  .history-panel.show { display: block; }
+  .hist-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px; color: rgba(255,255,255,0.35);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 10px; text-align: center;
+  }
+  .hist-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 14px; border-radius: 8px; margin-bottom: 5px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .hist-item.win-item  { border-color: rgba(134,239,172,0.14); }
+  .hist-item.lose-item { border-color: rgba(252,165,165,0.11); }
+  .hist-left { display: flex; align-items: center; gap: 10px; }
+  .hist-name { font-weight: 700; color: #c4b5fd; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-sub { font-size: 11px; color: rgba(255,255,255,0.33); margin-top: 1px; }
+  .hist-right { font-size: 11px; color: rgba(255,255,255,0.28); text-align: right; }
+
+  /* ── Loading ── */
+  .loading-screen {
+    position: fixed; inset: 0; z-index: 300;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #0d0d1a;
+    gap: 14px;
+  }
+  .load-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 38px; font-weight: 900;
+    background: linear-gradient(135deg, #c084fc, #818cf8, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 4px;
+  }
+  .load-sub { font-size: 13px; color: rgba(255,255,255,0.3); letter-spacing: 2px; text-transform: uppercase; }
+  .spinner {
+    width: 30px; height: 30px;
+    border: 2px solid rgba(167,139,250,0.2);
+    border-top-color: #a78bfa;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .err-msg { font-size: 13px; color: #fca5a5; text-align: center; padding: 6px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    header { padding: 10px 14px; }
+    .logo { font-size: 18px; }
+    .btn { padding: 11px 12px; font-size: 12px; }
+    #search-input { font-size: 13px; }
+    .res-stats { gap: 18px; }
+    .stat-n { font-size: 22px; }
+  }
+
+  /* ── End Screen ── */
+  #end-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    flex-direction: column;
+    animation: endFadeIn 0.55s ease forwards;
+    isolation: isolate;
+  }
+  #end-screen.show { display: flex; }
+
+  @keyframes endFadeIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Anime-style sky/fire background matching the screenshot */
+  .end-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(170deg,
+      #0d0820 0%,
+      #1a0e2e 30%,
+      #2d1a0e 60%,
+      #3d1a08 80%,
+      #5c2a0a 100%
+    );
+  }
+  .end-bg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(220,80,20,0.45), transparent 65%),
+      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(180,50,10,0.3), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 75%, rgba(200,70,15,0.3), transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 20%, rgba(80,30,150,0.25), transparent 60%);
+  }
+  /* Pagoda silhouette at bottom left */
+  .end-bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 45%;
+    background:
+      linear-gradient(to top, rgba(8,4,18,0.92) 0%, rgba(8,4,18,0.5) 50%, transparent 100%);
+  }
+
+  .end-content {
+    position: relative; z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  /* Top result card: cover + video */
+  .end-card {
+    flex: 1;
+    display: flex;
+    gap: 0;
+    margin: 16px 16px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(240,234,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 50px rgba(0,0,0,0.6);
+    min-height: 0;
+  }
+
+  /* Left panel: cover art */
+  .end-cover-panel {
+    width: 220px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    background: #0a0514;
+  }
+  .end-cover-panel img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0.92;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    image-rendering: auto;
+  }
+  .end-cover-panel .no-cover {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 60px;
+    background: linear-gradient(160deg, #1a0e2e, #0e1a2e);
+  }
+  .end-cover-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, transparent 60%, rgba(240,234,255,0.06) 100%);
+  }
+
+  /* Right panel: anime name + video */
+  .end-video-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 18px 0;
+    background: rgba(240,234,255,0.03);
+    min-width: 0;
+  }
+
+  .end-anime-name {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .end-theme-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.38);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .end-result-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .end-result-pill.win  { background: rgba(134,239,172,0.2); color: #86efac; border: 1px solid rgba(134,239,172,0.3); }
+  .end-result-pill.lose { background: rgba(252,165,165,0.2); color: #fca5a5; border: 1px solid rgba(252,165,165,0.3); }
+
+  /* Video replayed in end screen */
+  .end-video-wrap {
+    flex: 1;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+    min-height: 120px;
+  }
+  .end-video-wrap video {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* Bottom stats bar */
+  .end-stats-bar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 18px 16px 24px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .end-stat-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(240,234,255,0.1);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50%;
+    width: 110px;
+    height: 110px;
+    gap: 4px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+  .end-stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+  }
+  .end-stat-value {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #f0eaff;
+    line-height: 1;
+  }
+
+  /* Action buttons row */
+  .end-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 0 16px 16px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .end-cover-panel { width: 130px; }
+    .end-anime-name { font-size: 13px; }
+    .end-stat-bubble { width: 78px; height: 78px; }
+    .end-stat-value { font-size: 20px; }
+    .end-stat-label { font-size: 8px; }
+    .end-card { margin: 10px 10px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene-bg"><div class="stars"></div></div>
+
+<div class="loading-screen" id="loading">
+  <div class="load-logo">MUJADLE</div>
+  <div class="spinner"></div>
+  <div class="load-sub" id="load-msg">Fetching a theme...</div>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <div class="logo" id="logo-home" title="New game">MUJADLE</div>
+    <div class="header-mid">
+      <div class="header-title">Anime Opening &amp; Ending Wordle</div>
+      <div id="mode-badge" class="mode-badge daily">Daily</div>
+    </div>
+    <div class="header-right">
+      <div class="countdown" id="countdown"></div>
+      <div class="streak-badge" id="streak-disp"></div>
+    </div>
+  </header>
+
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btn-mode-daily"    onclick="switchMode('daily')">Daily</button>
+    <button class="mode-btn"        id="btn-mode-infinite" onclick="switchMode('infinite')">Infinite</button>
+    <button class="mode-btn"        id="btn-mode-hard"     onclick="switchMode('hard')">🔥 Hard</button>
+    <button class="mode-btn"        id="btn-mode-hardcore" onclick="switchMode('hardcore')">💀 Hardcore</button>
+    <button class="mode-btn"        id="btn-mode-era"      onclick="switchMode('era')">📅 Era</button>
+  </div>
+
+  <div class="type-switcher">
+    <button class="type-btn active op" id="btn-type-op"   onclick="switchType('OP')">Openings</button>
+    <button class="type-btn ed"        id="btn-type-ed"   onclick="switchType('ED')">Endings</button>
+    <button class="type-btn"           id="btn-type-both" onclick="switchType('BOTH')">Both</button>
+  </div>
+
+  <main>
+    <!-- Video -->
+    <div class="video-wrap" id="video-wrap">
+      <video id="game-video" preload="auto" playsinline></video>
+      <div class="blur-overlay" id="blur-overlay" style="--blur:22px"></div>
+      <div class="video-controls">
+        <button class="play-pause-btn" id="play-pause-btn" title="Play / Pause" onclick="togglePlayPause()">▶</button>
+        <div class="vid-scrub"><div class="vid-scrub-fill" id="vid-scrub-fill"></div></div>
+        <div class="vid-time" id="vid-time">0s</div>
+        <div class="clip-label" id="clip-label" style="position:static;background:none;padding:0;font-size:11px;color:rgba(255,255,255,0.4)">/ 3s</div>
+        <div class="vol-wrap">
+          <span class="vol-icon" id="vol-icon" onclick="toggleMute()" title="Mute/Unmute">🔊</span>
+          <input class="vol-slider" id="vol-slider" type="range" min="0" max="1" step="0.02" value="1" oninput="setVolume(this.value)">
+        </div>
+        <button class="fullscreen-btn" id="fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+      </div>
+      <div class="no-video-msg" id="no-video-msg">Video unavailable — try skipping or retrying.</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:20%"></div>
+    </div>
+
+    <!-- Lives -->
+    <div class="lives-row" id="lives-row"></div>
+
+    <!-- Input -->
+    <div class="guess-area" id="guess-area">
+      <div class="input-row">
+        <div class="search-wrapper">
+          <span class="s-icon">🔍</span>
+          <input id="search-input" type="text" placeholder="Search for an anime..." autocomplete="off" spellcheck="false">
+          <div id="autocomplete"></div>
+        </div>
+        <button class="btn btn-guess" id="btn-guess" disabled onclick="doGuess()">GUESS</button>
+        <button class="btn btn-skip"  id="btn-skip"           onclick="doSkip()">SKIP</button>
+      </div>
+    </div>
+
+    <div class="guesses-log" id="guesses-log"></div>
+    <div class="err-msg" id="err-msg" style="display:none"></div>
+
+    <!-- Era Mode Panel -->
+    <div class="era-panel" id="era-panel">
+      <div class="era-score-row">
+        <span class="era-round-label">Round <span id="era-round-num">1</span> / 10</span>
+        <span class="era-score" id="era-score-disp">0</span>
+        <div class="era-dots" id="era-dots"></div>
+      </div>
+      <div class="era-prompt">When did this anime air?</div>
+      <div class="era-btns-grid" id="era-btns-grid">
+        <button class="era-btn" data-era="1999s" onclick="eraGuess('1999s')">📼 1999–2004</button>
+        <button class="era-btn" data-era="2000s" onclick="eraGuess('2000s')">💿 2005–2009</button>
+        <button class="era-btn" data-era="2010s" onclick="eraGuess('2010s')">📱 2010–2014</button>
+        <button class="era-btn" data-era="2015s" onclick="eraGuess('2015s')">🌐 2015+</button>
+      </div>
+      <div class="era-feedback" id="era-feedback"></div>
+      <div class="era-reveal-info" id="era-reveal-info">
+        <div class="era-reveal-anime" id="era-reveal-anime"></div>
+        <div class="era-reveal-year"  id="era-reveal-year"></div>
+      </div>
+      <button class="era-next-btn" id="era-next-btn" onclick="eraNextRound()">Next →</button>
+    </div>
+
+    <!-- Era Final Score -->
+    <div class="era-final" id="era-final">
+      <div class="era-final-title" id="era-final-title">Era Mastery</div>
+      <div class="era-final-score" id="era-final-score">0 / 10</div>
+      <div class="era-final-sub" id="era-final-sub"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+        <button class="btn-primary" onclick="startEraMode()">Play Again</button>
+        <button class="btn-secondary" onclick="switchMode('infinite')">Infinite Mode</button>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="result-panel" id="result-panel">
+      <div class="res-title" id="res-title"></div>
+      <div class="res-top">
+        <div id="res-cover-wrap"></div>
+        <div class="res-info">
+          <div class="res-anime" id="res-anime"></div>
+          <div class="res-theme" id="res-theme"></div>
+          <div class="res-stats">
+            <div><div class="stat-n" id="stat-g">0</div><div class="stat-l">Guesses</div></div>
+            <div><div class="stat-n" id="stat-s">0</div><div class="stat-l">Skips</div></div>
+            <div><div class="stat-n" id="stat-streak">0</div><div class="stat-l">Streak</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="res-btns">
+        <button class="btn-primary"   id="btn-next">Next Anime</button>
+        <button class="btn-secondary" onclick="toggleHistory()">History</button>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-panel" id="history-panel">
+      <div class="hist-title">Play History</div>
+      <div id="hist-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ── End Screen ── -->
+<div id="end-screen">
+  <div class="end-bg"></div>
+  <div class="end-content">
+    <div class="end-card">
+      <!-- Cover art -->
+      <div class="end-cover-panel" id="end-cover-panel">
+        <div class="no-cover" id="end-cover-placeholder">🎌</div>
+        <div class="end-cover-gradient"></div>
+      </div>
+      <!-- Video + info -->
+      <div class="end-video-panel">
+        <div class="end-anime-name" id="end-anime-name"></div>
+        <div class="end-theme-label">
+          <span id="end-theme-label-text"></span>
+          <span class="end-result-pill" id="end-result-pill"></span>
+        </div>
+        <div class="end-video-wrap">
+          <video id="end-video" preload="none" playsinline controls></video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat bubbles -->
+    <div class="end-stats-bar">
+      <div class="end-stat-bubble">
+        <div class="end-stat-label">Played</div>
+        <div class="end-stat-value" id="end-stat-played">0</div>
+      </div>
+      <div class="end-stat-bubble">
+        <div class="end-stat-label">Wins</div>
+        <div class="end-stat-value" id="end-stat-wins">0 %</div>
+      </div>
+      <div class="end-stat-bubble">
+        <div class="end-stat-label">Streak</div>
+        <div class="end-stat-value" id="end-stat-streak">0</div>
+      </div>
+      <div class="end-stat-bubble">
+        <div class="end-stat-label">Record</div>
+        <div class="end-stat-value" id="end-stat-record">0</div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="end-btns">
+      <button class="btn-primary" id="end-btn-next">Next Anime</button>
+      <button class="btn-secondary" onclick="toggleHistory()">History</button>
+    </div>
+
+    <!-- History (reused) -->
+    <div style="padding: 0 16px 30px">
+      <div class="history-panel" id="end-history-panel">
+        <div class="hist-title">Play History</div>
+        <div id="end-hist-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://api.animethemes.moe';
+
+  function apiFetch(path) {
+    return fetch(API_BASE + path);
+  }
+  const MAX_LIVES    = 5;
+  const CLIP_SECS    = [3, 6, 10, 16, 25, 35];
+  const BLUR_PX      = [18, 10, 5, 2, 0, 0];
+
+  let mode      = 'daily';
+  let themeType = 'OP';
+
+  // Difficulty controls which page range the API is sampled from.
+  // animethemes.moe returns entries sorted by ID asc, so lower pages = older entries.
+  // Pool: 1999 to current. Pages 1-500 span the full era evenly.
+  // Infinite: full 1-500 spread for even year coverage
+  // Hard:     same spread but fetchTheme retries until it gets a less-common title
+  // Hardcore: skews toward higher pages (newer/more obscure)
+  // page[size]=100 is used, so these page numbers are in units of 100 themes.
+  // getTotal() will clamp maxPage to the real ceiling automatically.
+  // Lower pages = older IDs (roughly earlier years). Higher = newer/more obscure.
+  const DIFFICULTY_CFG = {
+    daily:    { minPage: 1,  maxPage: 999 },
+    infinite: { minPage: 1,  maxPage: 999 },
+    hard:     { minPage: 5,  maxPage: 999 },
+    hardcore: { minPage: 15, maxPage: 999 },
+    era:      { minPage: 1,  maxPage: 999 },
+  };
+  let streak    = 0;
+  let record    = 0;
+  let totalPlayed = 0;
+  let totalWins   = 0;
+  let history   = [];
+  let countdownTimer = null;
+  let clipTimer      = null;
+
+  let g = newGame();
+
+  function newGame() {
+    return {
+      answer: '', videoUrl: '', themeName: '', themeTypeLabel: '', coverUrl: '', year: 0,
+      lives: MAX_LIVES, guesses: [], skips: 0, done: false,
+      currentQuery: '', selectedIdx: -1, clipIdx: 0
+    };
+  }
+
+  /* ── Video clip control ── */
+  function updateClip() {
+    const vid  = document.getElementById('game-video');
+    const dur  = CLIP_SECS[Math.min(g.clipIdx, CLIP_SECS.length - 1)];
+    const blur = BLUR_PX[Math.min(g.clipIdx, BLUR_PX.length - 1)];
+
+    document.getElementById('game-video').style.setProperty('--blur', blur + 'px');
+    document.getElementById('clip-label').textContent = '/ ' + dur + 's';
+    document.getElementById('play-pause-btn').textContent = '▶';
+    document.getElementById('vid-scrub-fill').style.width = '0%';
+    document.getElementById('vid-time').textContent = '0s';
+    document.getElementById('progress-fill').style.width =
+      Math.min(((g.clipIdx + 1) / MAX_LIVES) * 100, 100) + '%';
+
+    clearInterval(clipTimer);
+    vid.pause();
+    vid.currentTime = 0;
+    // Don't autoplay — user presses play manually
+    document.getElementById('play-pause-btn').textContent = '▶';
+
+    clipTimer = setInterval(() => {
+      if (!vid.paused) {
+        const pct = Math.min((vid.currentTime / dur) * 100, 100);
+        document.getElementById('vid-scrub-fill').style.width = pct + '%';
+        document.getElementById('vid-time').textContent = Math.floor(vid.currentTime) + 's';
+      }
+      if (vid.currentTime >= dur) {
+        vid.pause();
+        vid.currentTime = 0;
+        document.getElementById('play-pause-btn').textContent = '▶';
+        document.getElementById('vid-scrub-fill').style.width = '0%';
+        document.getElementById('vid-time').textContent = '0s';
+        clearInterval(clipTimer);
+      }
+    }, 100);
+  }
+
+  function togglePlayPause() {
+    const vid = document.getElementById('game-video');
+    const btn = document.getElementById('play-pause-btn');
+    if (g.done && mode !== 'era') return;
+    if (mode === 'era') {
+      // Free play in era mode — no clip limit
+      if (vid.paused) { vid.play().catch(() => {}); btn.textContent = '⏸'; }
+      else            { vid.pause();                 btn.textContent = '▶'; }
+      return;
+    }
+    if (vid.paused) {
+      const dur = CLIP_SECS[Math.min(g.clipIdx, CLIP_SECS.length - 1)];
+      if (vid.currentTime >= dur) vid.currentTime = 0;
+      vid.play().catch(() => {});
+      btn.textContent = '⏸';
+      clearInterval(clipTimer);
+      clipTimer = setInterval(() => {
+        if (!vid.paused) {
+          const pct = Math.min((vid.currentTime / dur) * 100, 100);
+          document.getElementById('vid-scrub-fill').style.width = pct + '%';
+          document.getElementById('vid-time').textContent = Math.floor(vid.currentTime) + 's';
+        }
+        if (vid.currentTime >= dur) {
+          vid.pause();
+          vid.currentTime = 0;
+          btn.textContent = '▶';
+          document.getElementById('vid-scrub-fill').style.width = '0%';
+          document.getElementById('vid-time').textContent = '0s';
+          clearInterval(clipTimer);
+        }
+      }, 100);
+    } else {
+      vid.pause();
+      btn.textContent = '▶';
+    }
+  }
+
+  /* ── Lives ── */
+  function renderLives() {
+    const row = document.getElementById('lives-row');
+    row.innerHTML = '';
+    for (let i = 0; i < MAX_LIVES; i++) {
+      const h = document.createElement('span');
+      h.className = 'heart' + (i >= g.lives ? ' lost' : '');
+      h.textContent = '💗';
+      row.appendChild(h);
+    }
+  }
+
+  /* ── Guess log entry ── */
+  function addEntry(text, type) {
+    const log = document.getElementById('guesses-log');
+    const el  = document.createElement('div');
+    el.className = 'g-entry ' + type;
+    el.innerHTML = `<span style="font-size:15px">${type === 'wrong' ? '✗' : '⤼'}</span> ${escHtml(text)}`;
+    log.appendChild(el);
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── End of round ── */
+  function showResult(won) {
+    g.done = true;
+    clearInterval(clipTimer);
+
+    const vid = document.getElementById('game-video');
+    vid.pause();
+    document.getElementById('game-video').style.setProperty('--blur', '0px');
+    document.getElementById('btn-guess').disabled = true;
+    document.getElementById('btn-skip').disabled  = true;
+    document.getElementById('search-input').disabled = true;
+
+    // Update stats
+    totalPlayed++;
+    if (won) { totalWins++; streak++; } else { streak = 0; }
+    if (streak > record) record = streak;
+
+    document.getElementById('streak-disp').textContent =
+      streak > 1 ? '🔥 ' + streak + ' streak' : '';
+
+    history.unshift({
+      anime: g.answer, theme: g.themeName,
+      typeLabel: g.themeTypeLabel, won,
+      guesses: g.guesses.length, skips: g.skips
+    });
+    if (history.length > 30) history.pop();
+
+    // Populate end screen
+    document.getElementById('end-anime-name').textContent = g.answer;
+    document.getElementById('end-theme-label-text').textContent =
+      g.themeName + ' · ' + g.themeTypeLabel;
+
+    const pill = document.getElementById('end-result-pill');
+    pill.textContent = won ? '🎉 Correct' : '💀 Game Over';
+    pill.className   = 'end-result-pill ' + (won ? 'win' : 'lose');
+
+    // Cover art
+    const coverPanel = document.getElementById('end-cover-panel');
+    if (g.coverUrl) {
+      const img = document.createElement('img');
+      img.src = g.coverUrl; img.alt = g.answer;
+      img.onerror = () => {
+        coverPanel.innerHTML = '<div class="no-cover">🎌</div><div class="end-cover-gradient"></div>';
+      };
+      coverPanel.innerHTML = '';
+      coverPanel.appendChild(img);
+      const grad = document.createElement('div');
+      grad.className = 'end-cover-gradient';
+      coverPanel.appendChild(grad);
+    } else {
+      coverPanel.innerHTML = '<div class="no-cover">🎌</div><div class="end-cover-gradient"></div>';
+    }
+
+    // Transfer video to end screen player (full playback, no blur)
+    const endVid = document.getElementById('end-video');
+    endVid.src = g.videoUrl;
+    endVid.load();
+
+    // Stat bubbles
+    const winPct = totalPlayed ? Math.round((totalWins / totalPlayed) * 100) : 0;
+    document.getElementById('end-stat-played').textContent = totalPlayed;
+    document.getElementById('end-stat-wins').textContent   = winPct + ' %';
+    document.getElementById('end-stat-streak').textContent = streak;
+    document.getElementById('end-stat-record').textContent = record;
+
+    // Next button
+    const nextBtn = document.getElementById('end-btn-next');
+    if (['infinite','hard','hardcore'].includes(mode)) {
+      nextBtn.textContent = 'Next Anime';
+      nextBtn.onclick = () => { resetUI(); loadGame(); };
+    } else {
+      nextBtn.textContent = 'Play Infinite Mode';
+      nextBtn.onclick = () => { hideEndScreen(); switchMode('infinite'); };
+    }
+
+    // Render history in end screen panel
+    renderEndHistory();
+
+    // Transition: wait for blur to clear, then show end screen
+    document.getElementById('game-video').style.setProperty('--blur', '0px');
+    setTimeout(() => {
+      document.getElementById('end-screen').classList.add('show');
+      // Do NOT autoplay — let user press play
+    }, 950);
+  }
+
+  function hideEndScreen() {
+    const es = document.getElementById('end-screen');
+    es.classList.remove('show');
+    document.getElementById('end-video').pause();
+    document.getElementById('end-video').src = '';
+    document.getElementById('end-history-panel').classList.remove('show');
+  }
+
+  function renderEndHistory() {
+    const list = document.getElementById('end-hist-list');
+    list.innerHTML = '';
+    if (!history.length) {
+      list.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.28);font-size:13px;padding:14px">No history yet</div>';
+      return;
+    }
+    history.forEach(h => {
+      const el = document.createElement('div');
+      el.className = 'hist-item ' + (h.won ? 'win-item' : 'lose-item');
+      el.innerHTML = `
+        <div class="hist-left">
+          <span style="font-size:16px">${h.won ? '✅' : '❌'}</span>
+          <div>
+            <div class="hist-name">${escHtml(h.anime)}</div>
+            <div class="hist-sub">${escHtml(h.theme)} · ${escHtml(h.typeLabel)} · ${h.guesses} guess${h.guesses !== 1 ? 'es' : ''} · ${h.skips} skip${h.skips !== 1 ? 's' : ''}</div>
+          </div>
+        </div>`;
+      list.appendChild(el);
+    });
+  }
+
+  /* ── Guess / Skip ── */
+  function doGuess() {
+    if (mode === 'era') return;
+    const val = g.currentQuery.trim();
+    if (!val || g.done) return;
+    closeAC();
+    document.getElementById('search-input').value = '';
+    g.currentQuery = '';
+    document.getElementById('btn-guess').disabled = true;
+
+    if (val.toLowerCase() === g.answer.toLowerCase()) {
+      g.guesses.push(val);
+      showResult(true);
+    } else {
+      g.guesses.push(val);
+      g.lives--;
+      addEntry(val, 'wrong');
+      renderLives();
+      if (g.lives <= 0) { showResult(false); return; }
+      g.clipIdx++;
+      updateClip();
+    }
+  }
+
+  function doSkip() {
+    if (mode === 'era') return;
+    if (g.done) return;
+    g.lives--;
+    g.skips++;
+    addEntry('Skipped', 'skipped');
+    renderLives();
+    if (g.lives <= 0) { showResult(false); return; }
+    g.clipIdx++;
+    updateClip();
+  }
+
+  /* ── Volume ── */
+  let lastVol = 1;
+  function setVolume(val) {
+    val = parseFloat(val);
+    const vid = document.getElementById('game-video');
+    vid.volume = val; vid.muted = val === 0;
+    if (val > 0) lastVol = val;
+    updateVolIcon(val);
+  }
+  function toggleMute() {
+    const vid = document.getElementById('game-video');
+    const slider = document.getElementById('vol-slider');
+    if (vid.muted || vid.volume === 0) {
+      const v = lastVol || 1; vid.muted = false; vid.volume = v;
+      slider.value = v; updateVolIcon(v);
+    } else {
+      lastVol = vid.volume; vid.muted = true; slider.value = 0; updateVolIcon(0);
+    }
+  }
+  function updateVolIcon(val) {
+    const ic = document.getElementById('vol-icon');
+    if (ic) ic.textContent = val == 0 ? '🔇' : val < 0.45 ? '🔉' : '🔊';
+  }
+
+  /* ── Fullscreen ── */
+  function toggleFullscreen() {
+    const wrap = document.getElementById('video-wrap');
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      (wrap.requestFullscreen || wrap.webkitRequestFullscreen).call(wrap);
+    } else {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    }
+  }
+  document.addEventListener('fullscreenchange', () => {
+    const btn = document.getElementById('fullscreen-btn');
+    if (btn) btn.textContent = document.fullscreenElement ? '✕' : '⛶';
+  });
+  document.addEventListener('webkitfullscreenchange', () => {
+    const btn = document.getElementById('fullscreen-btn');
+    if (btn) btn.textContent = document.webkitFullscreenElement ? '✕' : '⛶';
+  });
+
+  /* ── Autocomplete — built from the actual theme pool ── */
+  // ── Bundled anime name list (works offline / in sandboxed viewers) ──
+  // This is a large seed list of well-known anime titles. The API cache
+  // builder runs in the background and merges additional names if network
+  // is available, but autocomplete is instant from page load regardless.
+  // Comprehensive anime name list covering the animethemes.moe pool (pages 1-300).
+  // Autocomplete works instantly from this list with no network required.
+  const BUNDLED_ANIME = [
+    "07-Ghost","11eyes","86","91 Days",
+    "Absolute Duo","Accel World","Ace of Diamond","Actas","Aggretsuko","Ahiru no Sora",
+    "Aikatsu!","Aikatsu Stars!","Air","Air Gear","Airu Gear","AKB0048",
+    "Akame ga Kill!","Akashic Records of Bastard Magic Instructor","Akatsuki no Yona",
+    "Aladdin","Aldnoah.Zero","Angel Beats!","Angolmois","Anne Happy","Another",
+    "Anohana: The Flower We Saw That Day","Ao no Exorcist","Aoharu x Kikanjuu",
+    "Aoki Hagane no Arpeggio","Araburu Kisetsu no Otome-domo yo.","Arakawa Under the Bridge",
+    "Are You Lost?","Arifureta","Arifureta Shokugyou de Sekai Saikyou",
+    "Arknights","Assassination Classroom","Asterisk War","Astra Lost in Space",
+    "Attack on Titan","Ayashi no Ceres","Azumanga Daioh",
+    "B-Project","Baccano!","Bakemonogatari","Bakugan Battle Brawlers","Banana Fish",
+    "Basilisk","Battle Game in 5 Seconds","Beck","Berserk","BanG Dream!",
+    "Big Order","Black Butler","Black Clover","Black Lagoon","Black Rock Shooter",
+    "Blade & Soul","Blast of Tempest","Bleach","Blood Blockade Battlefront",
+    "Blood+","Blue Exorcist","Blue Period","Blue Spring Ride","BNA: Brand New Animal",
+    "Boku dake ga Inai Machi","Boku no Hero Academia","Bokurano","Boruto",
+    "Brave 10","Btooom!","Bungo Stray Dogs","Burn the Witch",
+    "C: The Money of Soul and Possibility Control","C3","Campione!",
+    "Cardfight!! Vanguard","Cardcaptor Sakura","Cells at Work!","Cells at Work! Code Black",
+    "Charlotte","Chihayafuru","Chibi Maruko-chan","Children of the Whales",
+    "Chivalry of a Failed Knight","Chrono Crusade","City Hunter","Classroom of the Elite",
+    "Claymore","Clannad","Clannad After Story","Code Geass","Combatants Will Be Dispatched!",
+    "Comic Girls","Cowboy Bebop","Cross Ange","Cross Game","Cyberpunk: Edgerunners",
+    "D.Gray-man","Dagashi Kashi","Daily Lives of High School Boys",
+    "Dan Machi","Danganronpa","Darwin's Game","Date A Live","Days",
+    "Dead Mount Death Play","Death March to the Parallel World Rhapsody",
+    "Death Note","Death Parade","Demon King Daimao","Demon Slayer: Kimetsu no Yaiba",
+    "Denki-gai no Honya-san","Devilman Crybaby","Di Gi Charat",
+    "Digimon Adventure","Digimon Frontier","Digimon Savers","Digimon Tamers",
+    "Dog Days","Dragon Ball","Dragon Ball GT","Dragon Ball Super","Dragon Ball Z",
+    "Dr. Stone","Drifters","Durarara!!","Durarara!!x2",
+    "Eden of the East","Ef: A Tale of Memories","Ef: A Tale of Melodies",
+    "Elfen Lied","Engaged to the Unidentified","Eromanga Sensei","Eureka Seven",
+    "Evangelion","Excel Saga","Eyeshield 21",
+    "Fairy Tail","Fairy Tail: 100 Years Quest","Fate/Apocrypha","Fate/Extra Last Encore",
+    "Fate/Grand Order","Fate/kaleid liner Prisma Illya","Fate/stay night",
+    "Fate/stay night: Unlimited Blade Works","Fate/Zero",
+    "Flip Flappers","Food Wars!","Free!","Free! Eternal Summer","Free! Dive to the Future",
+    "From the New World","Fruits Basket","Fullmetal Alchemist",
+    "Fullmetal Alchemist: Brotherhood","Fune wo Amu","Future Diary",
+    "Gabriel DropOut","Gakkou Gurashi!","Galaxy Angel","Galilei Donna",
+    "Gangsta.","Garo","Genshiken","Ghost Hunt","Ghost in the Shell: Stand Alone Complex",
+    "Ghost Hound","Girlish Number","Given","Glasslip","Gleipnir",
+    "God Eater","Goblin Slayer","Golden Boy","Golden Kamuy","Golgo 13",
+    "Gourmet Girl Graffiti","Grand Blue","Granblue Fantasy The Animation",
+    "Great Teacher Onizuka","Grimgar of Fantasy and Ash","Guilty Crown",
+    "Gundam Build Fighters","Gunslinger Girl","Gurren Lagann",
+    "Haganai","Haikyuu!!","Hajime no Ippo","Hamefura","Hanasaku Iroha",
+    "Happy Sugar Life","Hataraku Maou-sama!","Hatsukoi Limited",
+    "Hayate the Combat Butler","Heavy Object","Hellsing","Hellsing Ultimate",
+    "High School DxD","High School Fleet","High School of the Dead",
+    "Higurashi When They Cry","Himouto! Umaru-chan","Hinamatsuri",
+    "His and Her Circumstances","Horimiya","Hunter x Hunter","Hyouka","Hypnosis Mic",
+    "I Can't Understand What My Husband Is Saying",
+    "Ikebukuro West Gate Park","Infinite Stratos","Initial D",
+    "Inuyasha","Inuyasha: The Final Act","Irozuku Sekai no Ashita kara",
+    "Is It Wrong to Try to Pick Up Girls in a Dungeon?",
+    "Is the Order a Rabbit?","Isekai Quartet","Isekai Shokudou","Isekai Izakaya",
+    "Izetta: The Last Witch",
+    "JoJo's Bizarre Adventure","Jormungand","Jujutsu Kaisen","Juni Taisen",
+    "Kakegurui","Kakegurui Twin","Kaichou wa Maid-sama!","Kaiji",
+    "Kamisama Kiss","Kamisama Hajimemashita","KanColle",
+    "Kanon","Karakai Jouzu no Takagi-san","Karneval","Katekyo Hitman Reborn!",
+    "Kemono Friends","Kill la Kill","Kiniro Mosaic","Kingdom",
+    "Kiznaiver","K-On!","K-On!!","Knight's & Magic",
+    "Kobayashi-san Chi no Maid Dragon","Kokoro Connect","Komi Can't Communicate",
+    "Kono Oto Tomare!","Kono Subarashii Sekai ni Shukufuku wo!",
+    "Koro-sensei Quest!","Kuroko's Basketball","Kuromukuro","Kyoukai no Kanata",
+    "Kyoukaisenjou no Horizon",
+    "Laid-Back Camp","Land of the Lustrous","Lapis Re:LiGHTs","Last Exile",
+    "Laughing Under the Clouds","Little Busters!","Little Witch Academia",
+    "Log Horizon","Love Hina","Love is War","Love Live!","Love Live! Sunshine!!",
+    "Love Live! Nijigasaki High School Idol Club","Lupin III",
+    "Macross","Macross Delta","Macross Frontier","Madoka Magica",
+    "Mahou Shoujo Site","Maison Ikkoku","Major","Major 2nd","Maken-Ki!",
+    "March Comes in Like a Lion","Megalo Box","Megalo Box 2: Nomad",
+    "Mikakunin de Shinkoukei","Miss Kobayashi's Dragon Maid",
+    "Mobile Suit Gundam","Mobile Suit Gundam 00","Mobile Suit Gundam Iron-Blooded Orphans",
+    "Mobile Suit Gundam SEED","Mobile Suit Gundam SEED Destiny",
+    "Mobile Suit Gundam Wing","Mob Psycho 100","Monthly Girls' Nozaki-kun",
+    "Mushishi","Mushoku Tensei: Jobless Reincarnation",
+    "My Hero Academia","My Love Story!!","My Next Life as a Villainess",
+    "My Teen Romantic Comedy SNAFU","Mystic Archives of Dantalian",
+    "Nagi no Asukara","Naruto","Naruto Shippuden","Natsume's Book of Friends",
+    "Natsume Yuujinchou","New Game!","NHK ni Youkoso!","Nichijou",
+    "Nisekoi","No Game No Life","No. 6","Non Non Biyori","Noragami","Norn9",
+    "One Piece","One Punch Man","Oregairu","Oshi no Ko","Overlord",
+    "Ouran High School Host Club","Owari no Seraph",
+    "Pandora Hearts","Panty & Stocking with Garterbelt","Parasyte",
+    "Penguindrum","Persona 4 The Animation","Persona 5 The Animation",
+    "Planet With","Plastic Memories","Pokemon","Pokemon XY","Pokemon Sun and Moon",
+    "Prince of Tennis","Princess Connect! Re:Dive","Princess Tutu",
+    "Prison School","Psycho-Pass","Punch Line",
+    "Quintessential Quintuplets",
+    "ReLIFE","Re:Zero","Rascal Does Not Dream of Bunny Girl Senpai","Re:Creators",
+    "Rent-a-Girlfriend","Rising of the Shield Hero","Robotics;Notes",
+    "Rokka no Yuusha","Rosario + Vampire","Rozen Maiden","Run with the Wind",
+    "Sailor Moon","Sailor Moon Crystal","Saiki K","Saiyuki","Sakamoto Desu ga?",
+    "Sakurasou no Pet na Kanojo","Samurai Champloo","Samurai Flamenco",
+    "School Days","School Rumble","Seraph of the End","Serial Experiments Lain",
+    "Servant x Service","Shakugan no Shana","Shaman King","Shigatsu wa Kimi no Uso",
+    "Shimoneta","Shin Sekai Yori","Shingeki no Bahamut","Shirobako",
+    "Show By Rock!!","SK8 the Infinity","Slam Dunk",
+    "Slime Taoshite 300-nen Shiranai Uchi ni Level Max ni Nattemashita",
+    "So I'm a Spider So What?","Sora no Otoshimono","Soul Eater","Soul Eater Not!",
+    "Sousei no Onmyouji","Star Driver","Steins;Gate","Steins;Gate 0",
+    "Strike the Blood","Strike Witches","Sword Art Online","Sword Art Online II",
+    "Sword Art Online: Alicization","Suki-tte Ii na yo.",
+    "Talentless Nana","Tamako Market","Tanaka-kun is Always Listless",
+    "Tenchi Muyo!","Tengen Toppa Gurren Lagann","Terror in Resonance",
+    "That Time I Got Reincarnated as a Slime","The Ancient Magus' Bride",
+    "The Disastrous Life of Saiki K.","The Familiar of Zero",
+    "The Melancholy of Haruhi Suzumiya","The Promised Neverland",
+    "The Rising of the Shield Hero","The Tatami Galaxy","Tiger & Bunny",
+    "Toilet-Bound Hanako-kun","Toradora!","Tower of God","Trigun",
+    "Trinity Seven","True Tears","Tsuki ga Kirei","Twin Star Exorcists",
+    "Umamusume: Pretty Derby","Uta no Prince-sama",
+    "Valvrave the Liberator","Vinland Saga","Violet Evergarden",
+    "Wagnaria!!","Welcome to Demon School! Iruma-kun","Welcome to the N.H.K.",
+    "White Album","White Album 2","Witch Craft Works","Wolf's Rain","Working!!",
+    "World Trigger","Wotakoi",
+    "Yamada-kun and the Seven Witches","Yona of the Dawn","Your Lie in April",
+    "Yu Yu Hakusho","Yu-Gi-Oh!","Yu-Gi-Oh! GX","Yu-Gi-Oh! 5D's",
+    "Yuuki Yuuna is a Hero","Yuri!!! on Ice","YuruYuri",
+    "Zatch Bell!","Zero no Tsukaima","Zombie Land Saga","Zoids",
+    "3-gatsu no Lion","3D Kanojo: Real Girl","7 Seeds",
+    "A Certain Magical Index","A Certain Scientific Railgun",
+    "A Place Further Than the Universe","A Silent Voice",
+    "Aharen-san wa Hakarenai","Aho-Girl","Amagami SS","Amagi Brilliant Park",
+    "Ano Hi Mita Hana","Anohana","Aquarion","Asobi Asobase",
+    "Asteroid in Love","Azur Lane",
+    "Barakamon","Binbougami ga!","Black Cat","Black Summoner",
+    "Blend S","Blue Lock","Bottom-tier Character Tomozaki",
+    "Chuunibyou demo Koi ga Shitai!","Citrus","Classroom Crisis",
+    "Clockwork Planet","Cop Craft","Comet Lucifer",
+    "DanMachi","Danshi Koukousei no Nichijou","Deca-Dence","Dive!!",
+    "Do You Love Your Mom and Her Two-Hit Multi-Target Attacks?",
+    "Dorohedoro","Dragon Crisis!","Dungeon ni Deai wo Motomeru",
+    "Endro~!","Ensemble Stars!",
+    "Fruit of Grisaia","Fuuka",
+    "Gamers!","Gate","Gekkan Shoujo Nozaki-kun","Gintama",
+    "Girls und Panzer","Girlfriend Beta","Gochuumon wa Usagi Desu ka?",
+    "Hanebado!","Haruchika","Harukana Receive","Hataraki Man",
+    "Healin' Good PreCure","Hinomaru Sumo","Hitoribocchi no Marumaruseikatsu",
+    "How Heavy Are the Dumbbells You Lift?","Hugtto! PreCure",
+    "If It's for My Daughter I'd Even Defeat a Demon Lord",
+    "In Another World With My Smartphone","Interviews with Monster Girls",
+    "Iroduku: The World in Colors","Isekai Maou to Shoukan Shoujo",
+    "Jashin-chan Dropkick","Joker Game",
+    "Kabaneri of the Iron Fortress","Kakuriyo no Yadomeshi","Kanata no Astra",
+    "Kemono Jihen","Kenja no Mago","Kenzen Robo Daimidaler","Keppeki Danshi! Aoyama-kun",
+    "Kikou Shoujo wa Kizutsukanai","Killing Bites","Kiniro Mosaic",
+    "Kino's Journey","Kiratto Pri Chan","Koi to Producer","Koi wa Ameagari no You ni",
+    "Kotoura-san","Kumamiko","Kuma Kuma Kuma Bear",
+    "Last Period","Lemon","Love and Lies","Love Tyrant",
+    "Magia Record","Mahou Shoujo Ikusei Keikaku","Mahou Shoujo Madoka Magica",
+    "Mahou Tsukai no Yome","Maid-sama!","Maoujou de Oyasumi",
+    "Marmalade Boy","Mashiro-iro Symphony","Mayoi Neko Overrun!",
+    "Miss Kobayashi's Dragon Maid S","Mitsuboshi Colors","Miyuki",
+    "Momokuri","Monster","Monster Musume",
+    "Muv-Luv Alternative: Total Eclipse","My Dress-Up Darling",
+    "Nameless Asterism","Nanbaka","Nanana's Buried Treasure",
+    "Nekopara","Net-juu no Susume","Noir","Norn9",
+    "O Maidens in Your Savage Season","Occultic;Nine","Ohys-Raws",
+    "Omamori Himari","One Off","Onegai Teacher","Onegai Twins",
+    "Orient","Ore Monogatari!!","Ore no Imouto ga Konnani Kawaii Wake ga Nai",
+    "Otome Game no Hametsu Flag shika Nai Akuyaku Reijou ni Tensei shiteshimatta",
+    "Outbreak Company","Overman King Gainer",
+    "Peter Grill","Photo Kano","Piace: Watashi no Italian",
+    "Poco's Udon World","Pokemon Journeys","Punchline",
+    "RahXephon","Rakudai Kishi no Cavalry","Ranma 1/2","Recorder and Randsell",
+    "Recovery of an MMO Junkie","Red Data Girl","Rewrite",
+    "Ro-Kyu-Bu!","Rokuhoudou Yotsuiro Biyori","Rolling Girls",
+    "Sabagebu!","Sakura Quest","Sangatsu no Lion","Saredo Tsumibito wa Ryuu to Odoru",
+    "Schwarzesmarken","Selector Infected WIXOSS","Senki Zesshou Symphogear",
+    "Seto no Hanayome","Shadows House","She and Her Cat","Shinmai Maou no Testament",
+    "Shirobako","Shouwa Genroku Rakugo Shinjuu","Slow Start","Smile PreCure!",
+    "Sora yori mo Tooi Basho","Sounan desu ka?","Spiritpact","Spy x Family",
+    "Stella no Mahou","Stray Dogs","Suki ni Naru Sono Shunkan wo",
+    "Tada-kun wa Koi wo Shinai","Takunomi","Tamayomi","Tenki no Ko",
+    "The Devil is a Part-Timer!","The Quintessential Quintuplets",
+    "The Way of the Househusband","To Your Eternity","Toaru Kagaku no Railgun",
+    "Toaru Majutsu no Index","Tomo-chan Is a Girl!","Toriko","Trickster",
+    "Tsurezure Children","Tsuredure Children",
+    "Uma Musume Pretty Derby","Under the Dog","Unlimited Fafnir",
+    "Vanitas no Carte","Vermeil in Gold",
+    "Wan Wan Celeb Soreyuke! Tetsunoshin","Wasteful Days of High School Girls",
+    "We Never Learn","Wind Breaker","Witch Hunter Robin",
+    "Yagate Kimi ni Naru","Yakusoku no Neverland","Yama no Susume",
+    "Yatogame-chan Kansatsu Nikki","Yosuga no Sora","Yowamushi Pedal",
+    "Yuragisou no Yuuna-san","Yuragi-sou no Yuuna-san",
+    "Zombieland Saga","Zombieland Saga Revenge"
+  ].sort((a, b) => a.localeCompare(b));
+
+  // Deduplicate
+  const _seen = new Set();
+  const ANIME_LIST = BUNDLED_ANIME.filter(n => { if (_seen.has(n)) return false; _seen.add(n); return true; });
+
+  let animeNameCache = ANIME_LIST;
+  let cacheReady = true;
+  let cacheMode  = null;
+
+  // No network cache builder needed — list is fully bundled.
+  // If network is available, silently fetch and merge more names in the background.
+  async function buildAnimeCache() {
+    const targetMode = mode;
+    cacheMode = targetMode;
+    const seen = new Set(ANIME_LIST);
+    try {
+      const cfg = DIFFICULTY_CFG[targetMode] || DIFFICULTY_CFG.infinite;
+      const allPages = [];
+      for (let p = cfg.minPage; p <= cfg.maxPage; p++) allPages.push(p);
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < allPages.length; i += BATCH_SIZE) {
+        if (cacheMode !== targetMode) return;
+        const batch = allPages.slice(i, i + BATCH_SIZE).map(p =>
+          apiFetch(`/animetheme?filter[year-gte]=1999&include=anime&fields[anime]=name&fields[animetheme]=id&page[size]=100&page[number]=${p}`)
+            .then(r => r.ok ? r.json() : { animethemes: [] })
+            .catch(() => ({ animethemes: [] }))
+        );
+        const results = await Promise.all(batch);
+        results.forEach(d =>
+          (d.animethemes || []).forEach(t => {
+            if (t.anime && t.anime.name) seen.add(t.anime.name);
+          })
+        );
+        if (i % 25 === 0) {
+          animeNameCache = Array.from(seen).sort((a, b) => a.localeCompare(b));
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (cacheMode !== targetMode) return;
+      animeNameCache = Array.from(seen).sort((a, b) => a.localeCompare(b));
+    } catch (_) {}
+  }
+  // Delay cache build so it doesn't compete with the initial game fetch
+  setTimeout(buildAnimeCache, 8000);
+
+  let debounce;
+  document.getElementById('search-input').addEventListener('input', e => {
+    const q = e.target.value;
+    g.currentQuery = q;
+    document.getElementById('btn-guess').disabled = !q.trim();
+    clearTimeout(debounce);
+    if (q.length < 2) { closeAC(); return; }
+
+    // Always use local cache (bundled list is ready from page load)
+    const ql = q.toLowerCase();
+    const starts   = animeNameCache.filter(n => n.toLowerCase().startsWith(ql));
+    const includes = animeNameCache.filter(n => !n.toLowerCase().startsWith(ql) && n.toLowerCase().includes(ql));
+    renderAC([...starts, ...includes].slice(0, 8));
+  });
+
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    const items = document.querySelectorAll('.ac-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      g.selectedIdx = Math.min(g.selectedIdx + 1, items.length - 1);
+      highlightAC(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      g.selectedIdx = Math.max(g.selectedIdx - 1, 0);
+      highlightAC(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (g.selectedIdx >= 0 && items[g.selectedIdx]) {
+        selectAC(items[g.selectedIdx].textContent);
+      } else if (g.currentQuery.trim()) {
+        doGuess();
+      }
+    } else if (e.key === 'Escape') {
+      closeAC();
+    }
+  });
+
+  function highlightAC(items) {
+    items.forEach((it, i) => it.classList.toggle('sel', i === g.selectedIdx));
+    if (items[g.selectedIdx]) {
+      g.currentQuery = items[g.selectedIdx].textContent;
+      document.getElementById('search-input').value = g.currentQuery;
+    }
+  }
+  function renderAC(names) {
+    const el = document.getElementById('autocomplete');
+    el.innerHTML = '';
+    if (!names.length) { el.classList.remove('open'); return; }
+    names.forEach(n => {
+      const item = document.createElement('div');
+      item.className = 'ac-item';
+      item.textContent = n;
+      item.addEventListener('mousedown', ev => { ev.preventDefault(); selectAC(n); });
+      el.appendChild(item);
+    });
+    el.classList.add('open');
+  }
+  function selectAC(name) {
+    document.getElementById('search-input').value = name;
+    g.currentQuery = name;
+    document.getElementById('btn-guess').disabled = false;
+    closeAC();
+  }
+  function closeAC() {
+    document.getElementById('autocomplete').classList.remove('open');
+    document.getElementById('autocomplete').innerHTML = '';
+    g.selectedIdx = -1;
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-wrapper')) closeAC();
+  });
+
+  /* ── Mode / Type switchers ── */
+  function switchMode(m) {
+    mode = m;
+    ['daily','infinite','hard','hardcore','era'].forEach(x => {
+      const btn = document.getElementById('btn-mode-' + x);
+      if (btn) btn.classList.toggle('active', x === m);
+    });
+    const badge = document.getElementById('mode-badge');
+    const labels = { daily: 'Daily', infinite: 'Infinite', hard: '🔥 Hard', hardcore: '💀 Hardcore', era: '📅 Era' };
+    badge.textContent = labels[m] || m;
+    badge.className   = 'mode-badge ' + m;
+
+    // Type switcher not relevant for era mode
+    document.querySelector('.type-switcher').style.display = m === 'era' ? 'none' : '';
+
+    // Rebuild autocomplete (delayed so video fetch gets priority)
+    setTimeout(buildAnimeCache, 5000);
+
+    resetUI();
+    if (m === 'era') {
+      startEraMode();
+    } else {
+      loadGame();
+    }
+  }
+
+  /* ── Era Mode State ── */
+  let era = {
+    round: 0, score: 0, results: [], answered: false
+  };
+
+  const ERA_TOTAL = 10;
+
+  function yearToEra(y) {
+    if (y < 2005) return '1999s';
+    if (y < 2010) return '2000s';
+    if (y < 2015) return '2010s';
+    return '2015s';
+  }
+
+  function eraLabel(e) {
+    return { '1999s': '1999–2004', '2000s': '2005–2009', '2010s': '2010–2014', '2015s': '2015+' }[e];
+  }
+
+  function startEraMode() {
+    era = { round: 0, score: 0, results: [], answered: false };
+    document.getElementById('era-final').classList.remove('show');
+    document.getElementById('era-panel').classList.add('show');
+    // Hide normal game elements that don't apply
+    document.getElementById('lives-row').style.display    = 'none';
+    document.getElementById('guess-area').style.display   = 'none';
+    document.getElementById('guesses-log').style.display  = 'none';
+    document.getElementById('result-panel').classList.remove('show');
+    renderEraDots();
+    loadEraRound();
+  }
+
+  function renderEraDots() {
+    const dots = document.getElementById('era-dots');
+    dots.innerHTML = '';
+    for (let i = 0; i < ERA_TOTAL; i++) {
+      const d = document.createElement('div');
+      const r = era.results[i];
+      d.className = 'era-dot' +
+        (r === true  ? ' correct' :
+         r === false ? ' wrong'   :
+         i === era.round ? ' current' : '');
+      dots.appendChild(d);
+    }
+  }
+
+  async function loadEraRound() {
+    document.getElementById('era-feedback').textContent = '';
+    document.getElementById('era-feedback').className   = 'era-feedback';
+    document.getElementById('era-reveal-info').classList.remove('show');
+    document.getElementById('era-next-btn').classList.remove('show');
+    document.getElementById('era-round-num').textContent = era.round + 1;
+    document.getElementById('era-score-disp').textContent = era.score;
+    era.answered = false;
+
+    // Enable all era buttons
+    document.querySelectorAll('.era-btn').forEach(b => {
+      b.disabled = false;
+      b.className = 'era-btn';
+    });
+
+    // Load video via normal loadGame machinery but in era context
+    await loadGame();
+  }
+
+  function eraGuess(choice) {
+    if (era.answered) return;
+    era.answered = true;
+    const correct = yearToEra(g.year);
+    const won     = choice === correct;
+
+    if (won) era.score++;
+    era.results[era.round] = won;
+    renderEraDots();
+    document.getElementById('era-score-disp').textContent = era.score;
+
+    // Style buttons
+    document.querySelectorAll('.era-btn').forEach(b => {
+      b.disabled = true;
+      const bEra = b.dataset.era;
+      if (bEra === correct)  b.classList.add(won && bEra === choice ? 'correct' : 'reveal');
+      if (bEra === choice && !won) b.classList.add('wrong');
+    });
+
+    const fb = document.getElementById('era-feedback');
+    fb.textContent = won
+      ? '✓ Correct! ' + g.year
+      : '✗ It was ' + g.year + ' (' + eraLabel(correct) + ')';
+    fb.className = 'era-feedback ' + (won ? 'correct' : 'wrong');
+
+    document.getElementById('era-reveal-anime').textContent = g.answer;
+    document.getElementById('era-reveal-year').textContent  = g.themeName + ' · ' + g.themeTypeLabel + ' · ' + g.year;
+    document.getElementById('era-reveal-info').classList.add('show');
+
+    // Unblur video so they can see what it was
+    document.getElementById('game-video').style.setProperty('--blur', '0px');
+
+    document.getElementById('era-next-btn').classList.add('show');
+    document.getElementById('era-next-btn').textContent =
+      era.round + 1 >= ERA_TOTAL ? 'See Results' : 'Next →';
+  }
+
+  function eraNextRound() {
+    era.round++;
+    if (era.round >= ERA_TOTAL) {
+      showEraFinal();
+    } else {
+      loadEraRound();
+    }
+  }
+
+  function showEraFinal() {
+    document.getElementById('era-panel').classList.remove('show');
+    document.getElementById('era-final').classList.add('show');
+    const s = era.score;
+    const grades = [
+      [10, '🏆 Perfect Score!',    'A legendary anime historian.'],
+      [8,  '⭐ Excellent!',         'You know your eras well.'],
+      [6,  '👍 Pretty Good',        'Not bad at all.'],
+      [4,  '📚 Keep Watching',      'More anime homework needed.'],
+      [0,  '💀 Era Novice',         'Time to start from the 80s.'],
+    ];
+    const [, title, sub] = grades.find(([min]) => s >= min);
+    document.getElementById('era-final-title').textContent = title;
+    document.getElementById('era-final-score').textContent = s + ' / ' + ERA_TOTAL;
+    document.getElementById('era-final-sub').textContent   = sub;
+
+    // Update global stats
+    totalPlayed++;
+    if (s >= ERA_TOTAL / 2) totalWins++;
+    if (s >= 6) { streak++; } else { streak = 0; }
+    if (streak > record) record = streak;
+
+    history.unshift({ anime: 'Era Mode', theme: s + '/' + ERA_TOTAL + ' correct',
+      typeLabel: 'ERA', won: s >= ERA_TOTAL / 2, guesses: ERA_TOTAL, skips: 0 });
+  }
+
+  function switchType(t) {
+    themeType = t;
+    ['OP', 'ED', 'BOTH'].forEach(x => {
+      const btn = document.getElementById('btn-type-' + x.toLowerCase());
+      btn.className = 'type-btn' + (t === x ? ' active ' + x.toLowerCase() : '');
+    });
+    resetUI();
+    loadGame();
+  }
+
+  function resetUI() {
+    hideEndScreen();
+    clearInterval(clipTimer);
+    // Cancel any in-flight loadGame() and clear the busy guard
+    _loadId++;
+    loadGame._busy = false;
+    // Replace the video element entirely to kill any stale loadeddata/error listeners
+    const vid = document.getElementById('game-video');
+    vid.pause();
+    const newVid = vid.cloneNode(false); // clone without listeners
+    newVid.id = 'game-video';
+    vid.replaceWith(newVid);
+    document.getElementById('result-panel').classList.remove('show');
+    document.getElementById('history-panel').classList.remove('show');
+    document.getElementById('era-panel').classList.remove('show');
+    document.getElementById('era-final').classList.remove('show');
+    document.getElementById('guesses-log').innerHTML = '';
+    document.getElementById('guesses-log').style.display = '';
+    document.getElementById('err-msg').style.display = 'none';
+    document.getElementById('search-input').disabled = false;
+    document.getElementById('search-input').value    = '';
+    document.getElementById('btn-guess').disabled    = true;
+    document.getElementById('btn-skip').disabled     = false;
+    document.getElementById('lives-row').style.display   = '';
+    document.getElementById('guess-area').style.display  = '';
+    closeAC();
+  }
+
+  /* ── History ── */
+  function toggleHistory() {
+    const endScreen = document.getElementById('end-screen');
+    if (endScreen.classList.contains('show')) {
+      // In end screen: toggle end-screen history panel
+      const p = document.getElementById('end-history-panel');
+      p.classList.toggle('show');
+      renderEndHistory();
+    } else {
+      const p = document.getElementById('history-panel');
+      p.classList.toggle('show');
+      renderHistory();
+    }
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('hist-list');
+    list.innerHTML = '';
+    if (!history.length) {
+      list.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.28);font-size:13px;padding:14px">No history yet</div>';
+      return;
+    }
+    history.forEach(h => {
+      const el = document.createElement('div');
+      el.className = 'hist-item ' + (h.won ? 'win-item' : 'lose-item');
+      el.innerHTML = `
+        <div class="hist-left">
+          <span style="font-size:16px">${h.won ? '✅' : '❌'}</span>
+          <div>
+            <div class="hist-name">${escHtml(h.anime)}</div>
+            <div class="hist-sub">${escHtml(h.theme)} · ${escHtml(h.typeLabel)} · ${h.guesses} guess${h.guesses !== 1 ? 'es' : ''} · ${h.skips} skip${h.skips !== 1 ? 's' : ''}</div>
+          </div>
+        </div>`;
+      list.appendChild(el);
+    });
+  }
+
+  /* ── Countdown ── */
+  function updateCountdown() {
+    const now     = new Date();
+    const midnight = new Date(); midnight.setHours(24, 0, 0, 0);
+    const diff = midnight - now;
+    const hh = String(Math.floor(diff / 3600000)).padStart(2, '0');
+    const mm = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+    const ss = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+    document.getElementById('countdown').textContent = `Next: ${hh}:${mm}:${ss}`;
+  }
+
+    /* ── API fetch ── */
+
+  // Cache total theme counts per type so we can pick a true random offset
+  const _totalCache = {};
+
+  async function getTotal(typeFilter) {
+    if (_totalCache[typeFilter] !== undefined) return _totalCache[typeFilter];
+    const res = await apiFetch(`/animetheme?${typeFilter}filter[year-gte]=1999&fields[animetheme]=id&page[size]=1&page[number]=1`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const total = data.meta && data.meta.total ? data.meta.total : null;
+    if (total) _totalCache[typeFilter] = total;
+    return total;
+  }
+
+  async function fetchTheme(type, attempt) {
+    attempt = attempt || 0;
+    if (attempt > 6) throw new Error('Could not find a valid theme after multiple tries.');
+    const typeFilter = type === 'BOTH' ? '' : `filter[type]=${type}&`;
+    const cfg = DIFFICULTY_CFG[mode] || DIFFICULTY_CFG.infinite;
+
+    // Get the real total so we pick a valid random page every time
+    const total = await getTotal(typeFilter);
+
+    let page;
+    if (total) {
+      // Pick a random offset within the real dataset, clamped to difficulty range
+      // page[size]=100 so page count = ceil(total/100)
+      const totalPages = Math.ceil(total / 100);
+      const minP = Math.min(cfg.minPage, totalPages);
+      const maxP = Math.min(cfg.maxPage, totalPages);
+      page = minP + Math.floor(Math.random() * (maxP - minP + 1));
+    } else {
+      // Fallback if meta fetch failed
+      page = cfg.minPage + Math.floor(Math.random() * (cfg.maxPage - cfg.minPage + 1));
+    }
+
+    const res = await apiFetch(`/animetheme?${typeFilter}filter[year-gte]=1999&include=animethemeentries.videos,anime.images&fields[anime]=name,year&fields[image]=facet,link&fields[video]=link,resolution&page[size]=100&page[number]=${page}`);
+    if (!res.ok) throw new Error('API error: ' + res.status);
+    const data = await res.json();
+    const themes = (data.animethemes || []).filter(t => {
+      if (!t.anime || !t.anime.year || t.anime.year < 1999) return false;
+      return (t.animethemeentries || []).some(e => (e.videos || []).some(v => v.link));
+    });
+    if (!themes.length) return fetchTheme(type, attempt + 1);
+    const theme = themes[Math.floor(Math.random() * themes.length)];
+    const entry = theme.animethemeentries.find(e => (e.videos || []).some(v => v.link));
+    const videos = entry.videos.filter(v => v.link);
+    const video = videos.find(v => v.resolution === 480)
+               || videos.sort((a, b) => (a.resolution || 9999) - (b.resolution || 9999))[0];
+    const images = theme.anime.images || [];
+    const cover = images.find(i => i.facet === 'Large Cover')
+               || images.find(i => i.facet === 'Small Cover')
+               || images[0];
+    return {
+      answer:         theme.anime.name,
+      videoUrl:       video.link,
+      themeName:      theme.slug || (theme.type + (theme.sequence || '')),
+      themeTypeLabel: theme.type + (theme.sequence || ''),
+      coverUrl:       cover ? cover.link : '',
+      year:           theme.anime.year || 0
+    };
+  }
+
+  /* ── Load game ── */
+  let _loadId = 0; // increments each call so stale async callbacks self-cancel
+
+  async function loadGame() {
+    // Guard: prevent a stale video-error callback from spawning a duplicate load
+    if (loadGame._busy) return;
+    loadGame._busy = true;
+    const myId = ++_loadId;
+
+    clearInterval(clipTimer);
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('app').style.display     = 'none';
+    document.getElementById('load-msg').textContent  = 'Fetching a theme...';
+
+    g = newGame();
+    if (mode !== 'era') renderLives();
+
+    try {
+      const result = await fetchTheme(themeType);
+
+      // If another loadGame() started while we were awaiting, bail out
+      if (myId !== _loadId) { loadGame._busy = false; return; }
+
+      Object.assign(g, result);
+
+      const vid = document.getElementById('game-video');
+      vid.src = g.videoUrl;
+      vid.load();
+
+      vid.addEventListener('loadeddata', () => {
+        updateClip();
+      }, { once: true });
+
+      vid.addEventListener('error', () => {
+        // Only retry if this is still the active load and game isn't done
+        if (myId === _loadId && !g.done) {
+          loadGame._busy = false;
+          loadGame();
+        }
+      }, { once: true });
+
+      document.getElementById('game-video').style.setProperty('--blur', BLUR_PX[0] + 'px');
+      document.getElementById('clip-label').textContent = '/ ' + CLIP_SECS[0] + 's';
+      document.getElementById('play-pause-btn').textContent = '▶';
+      document.getElementById('vid-scrub-fill').style.width = '0%';
+      document.getElementById('vid-time').textContent = '0s';
+      document.getElementById('progress-fill').style.width = (1 / MAX_LIVES * 100) + '%';
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display     = 'flex';
+
+      if (mode === 'era') {
+        // Re-hide normal game elements, re-show era panel
+        document.getElementById('lives-row').style.display   = 'none';
+        document.getElementById('guess-area').style.display  = 'none';
+        document.getElementById('guesses-log').style.display = 'none';
+        document.getElementById('era-panel').classList.add('show');
+        renderEraDots();
+      } else {
+        // Always re-enable input when a new round is ready
+        document.getElementById('search-input').disabled = false;
+        document.getElementById('search-input').value    = '';
+        document.getElementById('btn-guess').disabled    = true;
+        document.getElementById('btn-skip').disabled     = false;
+      }
+
+      if (!countdownTimer) {
+        updateCountdown();
+        countdownTimer = setInterval(updateCountdown, 1000);
+      }
+
+      loadGame._busy    = false;
+      loadGame._retries = 0;
+    } catch (err) {
+      if (myId !== _loadId) { loadGame._busy = false; return; }
+      // Auto-retry up to 5 times with a short delay before showing the error
+      loadGame._retries = (loadGame._retries || 0) + 1;
+      loadGame._busy    = false;
+      if (loadGame._retries <= 5) {
+        document.getElementById('load-msg').textContent = 'Retrying... (' + loadGame._retries + '/5)';
+        setTimeout(loadGame, 1500);
+      } else {
+        loadGame._retries = 0;
+        document.getElementById('load-msg').innerHTML =
+          `Failed to load. <button onclick="loadGame()" style="color:#a78bfa;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;text-decoration:underline">Retry</button>`;
+      }
+    }
+  }
+
+  /* ── Logo = restart ── */
+  document.getElementById('logo-home').onclick = () => {
+    resetUI();
+    loadGame();
+  };
+
+  /* ── Boot ── */
+  loadGame();
+</script>
+</body>
+</html>
